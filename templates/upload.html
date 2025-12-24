@@ -1,0 +1,346 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Photo - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card card">
+        <h2>Submit Your Photo</h2>
+        <p class="subtitle">Share your best shot with the community</p>
+        
+        <form method="POST" action="{{ url_for('upload_photo') }}" enctype="multipart/form-data" id="uploadForm">
+            {{ form.hidden_tag() }}  <!-- CSRF Token -->
+            
+            <!-- Photo Upload -->
+            <div class="form-group">
+                <label for="photo">Select Photo *</label>
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                    <p>Drag & drop your photo here or click to browse</p>
+                    <p class="file-info" id="fileInfo">No file selected</p>
+                    {{ form.photo(id="photoInput", accept="image/*", style="display: none;", onchange="previewImage(event)") }}
+                    
+                    {% if form.photo.errors %}
+                        <div class="error-message">
+                            {% for error in form.photo.errors %}
+                                <span class="error-text">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <small class="form-text">Allowed formats: JPG, PNG, GIF. Max size: 16MB</small>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+            
+            <!-- Photo Title -->
+            <div class="form-group">
+                {{ form.title.label }}
+                {{ form.title(class="form-control", placeholder="Give your photo a compelling title") }}
+                {% if form.title.errors %}
+                    <div class="error-message">
+                        {% for error in form.title.errors %}
+                            <span class="error-text">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Photo Description -->
+            <div class="form-group">
+                {{ form.description.label }}
+                {{ form.description(class="form-control", rows="4", placeholder="Tell us about your photo...") }}
+            </div>
+            
+            <!-- Competition Rules -->
+            <div class="rules-section">
+                <h3>Competition Rules</h3>
+                <ul>
+                    <li>Photos must be your original work</li>
+                    <li>No offensive or inappropriate content</li>
+                    <li>Photos will be moderated before approval</li>
+                    <li>Voting begins after admin approval</li>
+                </ul>
+                <div class="form-check">
+                    <input type="checkbox" id="agreeRules" name="agreeRules" class="form-check-input" required>
+                    <label for="agreeRules" class="form-check-label">
+                        I agree to the competition rules *
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    <i class="fas fa-upload"></i> Submit Photo
+                </button>
+                <a href="{{ url_for('profile') }}" class="btn btn-secondary btn-block">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .upload-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .upload-card {
+        padding: 30px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .upload-card h2 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-size: 2em;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+    }
+
+    .upload-area {
+        border: 2px dashed #6D9674;
+        border-radius: 10px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background-color: #f9f9f9;
+        margin-bottom: 15px;
+        position: relative;
+    }
+
+    .upload-area:hover {
+        background-color: #f0f0f0;
+        border-color: #1F3B2C;
+    }
+
+    .upload-area i {
+        color: #6D9674;
+        margin-bottom: 15px;
+    }
+
+    .upload-area p {
+        margin: 10px 0;
+        color: #666;
+    }
+
+    .file-info {
+        font-weight: bold;
+        color: #1F3B2C;
+        margin-top: 10px;
+    }
+
+    .image-preview {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .image-preview img {
+        max-width: 300px;
+        max-height: 300px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: 2px solid #6D9674;
+    }
+
+    .rules-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid #6D9674;
+    }
+
+    .rules-section h3 {
+        color: #1F3B2C;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+    }
+
+    .rules-section ul {
+        padding-left: 20px;
+        color: #555;
+        margin-bottom: 15px;
+    }
+
+    .rules-section li {
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+
+    .form-check {
+        padding-left: 1.5em;
+        margin-top: 10px;
+    }
+
+    .form-check-label {
+        color: #555;
+        font-weight: 500;
+    }
+
+    .btn-block {
+        margin-bottom: 10px;
+        padding: 12px;
+        font-size: 1.1em;
+    }
+
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 1em;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .form-control:focus {
+        border-color: #6D9674;
+        box-shadow: 0 0 0 0.2rem rgba(109, 150, 116, 0.25);
+    }
+
+    label {
+        font-weight: 600;
+        color: #1F3B2C;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+
+    .error-text {
+        display: block;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+</style>
+
+<script>
+// Get DOM elements
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('photoInput');
+const fileInfo = document.getElementById('fileInfo');
+const preview = document.getElementById('imagePreview');
+const submitBtn = document.getElementById('submitBtn');
+const uploadForm = document.getElementById('uploadForm');
+const agreeRules = document.getElementById('agreeRules');
+
+// Handle click on upload area
+uploadArea.addEventListener('click', (e) => {
+    // Only trigger if not clicking on the file input itself
+    if (e.target !== fileInput) {
+        fileInput.click();
+    }
+});
+
+// Handle file selection
+function previewImage(event) {
+    const input = event.target;
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        fileInfo.textContent = 'No file selected';
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+    }
+}
+
+// Drag and drop functionality
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.style.borderColor = '#1F3B2C';
+    uploadArea.style.backgroundColor = '#e9f5eb';
+});
+
+uploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.style.borderColor = '#6D9674';
+    uploadArea.style.backgroundColor = '#f9f9f9';
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.style.borderColor = '#6D9674';
+    uploadArea.style.backgroundColor = '#f9f9f9';
+    
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        const event = new Event('change', { bubbles: true });
+        fileInput.dispatchEvent(event);
+    }
+});
+
+// Form validation
+uploadForm.addEventListener('submit', function(e) {
+    // Check if rules are agreed
+    if (!agreeRules.checked) {
+        e.preventDefault();
+        alert('Please agree to the competition rules before submitting.');
+        agreeRules.focus();
+        return false;
+    }
+    
+    // Check if file is selected
+    if (!fileInput.files || fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Please select a photo to upload.');
+        return false;
+    }
+    
+    // Check file size (16MB limit)
+    const file = fileInput.files[0];
+    const maxSize = 16 * 1024 * 1024; // 16MB in bytes
+    
+    if (file.size > maxSize) {
+        e.preventDefault();
+        alert('File size exceeds 16MB limit. Please choose a smaller file.');
+        return false;
+    }
+    
+    // Disable submit button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    
+    return true;
+});
+
+// Enable form resubmission if page is reloaded
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-upload"></i> Submit Photo';
+    }
+});
+</script>
+{% endblock %}

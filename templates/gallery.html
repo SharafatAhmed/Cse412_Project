@@ -1,0 +1,823 @@
+{% extends "layout.html" %}
+
+{% block title %}Gallery - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="gallery-container">
+    <div class="gallery-header">
+        <h1>Photo Gallery</h1>
+        <p>Browse and vote for your favorite photos</p>
+        
+        <div class="gallery-filters">
+            <input type="text" id="searchInput" placeholder="Search photos..." class="form-control">
+            <select id="sortSelect" class="form-control">
+                <option value="votes">Most Votes</option>
+                <option value="recent">Most Recent</option>
+                <option value="oldest">Oldest First</option>
+            </select>
+        </div>
+    </div>
+
+
+    <!-- Gallery Grid -->
+    <div class="gallery-grid" id="photoGrid">
+        {% for photo in photos.items %}
+        <div class="photo-card" data-id="{{ photo.id }}" data-votes="{{ photo.votes_count }}" data-date="{{ photo.upload_date }}">
+            <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" 
+                 alt="{{ photo.title }}"
+                 loading="lazy">
+            
+            <div class="photo-card-content">
+                <h3>{{ photo.title }}</h3>
+                <p class="photo-description">{{ photo.description[:100] }}{% if photo.description|length > 100 %}...{% endif %}</p>
+                
+                <div class="photo-meta">
+                    <span class="author">
+                        <i class="fas fa-user"></i> {{ photo.author.username }}
+                    </span>
+                    <span class="votes">
+                        <i class="fas fa-heart"></i> <span id="votes-{{ photo.id }}">{{ photo.votes_count }}</span>
+                    </span>
+                </div>
+                
+                <div class="photo-actions">
+                    {% if current_user.is_authenticated %}
+                        {% set user_voted = false %}
+                        {% if current_user.votes %}
+                            {% for vote in current_user.votes %}
+                                {% if vote.photo_id == photo.id %}
+                                    {% set user_voted = true %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if current_user.is_voter() %}
+                            <button id="vote-btn-{{ photo.id }}" 
+                                    class="btn-vote {% if user_voted %}voted{% endif %}"
+                                    data-photo-id="{{ photo.id }}"
+                                    {% if user_voted %}disabled{% endif %}>
+                                <i class="fas fa-heart"></i>
+                                {% if user_voted %}Voted{% else %}Vote{% endif %}
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button class="btn-view" onclick="viewPhotoDetails('{{ photo.id }}')">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="comments-section">
+                    <h4>Comments ({{ photo.comments|length }})</h4>
+                    <div class="comments-list" id="comments-{{ photo.id }}">
+                        {% for comment in photo.comments[:3] %}
+                        <div class="comment">
+                            <strong>{{ comment.commenter.username }}:</strong>
+                            {{ comment.content[:100] }}{% if comment.content|length > 100 %}...{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if current_user.is_authenticated %}
+                    <div class="add-comment">
+                        <textarea id="comment-text-{{ photo.id }}" 
+                                  placeholder="Add a comment..."
+                                  rows="2"></textarea>
+                        <button onclick="submitComment('{{ photo.id }}')" class="btn btn-small">
+                            Post
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if photos.pages > 1 %}
+    <div class="pagination">
+        {% if photos.has_prev %}
+            <a href="{{ url_for('gallery', page=photos.prev_num) }}" class="page-link">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
+        {% endif %}
+        
+        {% for page_num in photos.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == photos.page %}
+                    <span class="page-link active">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('gallery', page=page_num) }}" class="page-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="ellipsis">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if photos.has_next %}
+            <a href="{{ url_for('gallery', page=photos.next_num) }}" class="page-link">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .gallery-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .gallery-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .gallery-header h1 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .gallery-filters {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .gallery-filters .form-control {
+        width: 300px;
+        max-width: 100%;
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .photo-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .photo-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+
+    .photo-card img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-bottom: 1px solid #eee;
+    }
+
+    .photo-card-content {
+        padding: 20px;
+    }
+
+    .photo-card-content h3 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+
+    .photo-description {
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    .photo-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #888;
+        font-size: 0.9em;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .photo-meta i {
+        margin-right: 5px;
+    }
+
+    .photo-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .btn-vote, .btn-view {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-vote {
+        background-color: #ff6b6b;
+        color: white;
+    }
+
+    .btn-vote:hover:not(:disabled) {
+        background-color: #ff5252;
+    }
+
+    .btn-vote:disabled, .btn-vote.voted {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    .btn-view {
+        background-color: #6D9674;
+        color: white;
+    }
+
+    .btn-view:hover {
+        background-color: #1F3B2C;
+    }
+
+    .comments-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+
+    .comments-section h4 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-size: 1em;
+    }
+
+    .comments-list {
+        max-height: 150px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-radius: 5px;
+    }
+
+    .comment {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9em;
+        color: #555;
+    }
+
+    .comment:last-child {
+        border-bottom: none;
+    }
+
+    .add-comment {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .add-comment textarea {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 40px;
+        flex-wrap: wrap;
+    }
+
+    .page-link {
+        padding: 10px 15px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        color: #1F3B2C;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .page-link:hover:not(.active) {
+        background: #f0f0f0;
+        border-color: #6D9674;
+    }
+
+    .page-link.active {
+        background: #6D9674;
+        color: white;
+        border-color: #6D9674;
+    }
+
+    .ellipsis {
+        padding: 10px 15px;
+        color: #666;
+    }
+
+    @media (max-width: 768px) {
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .gallery-filters {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .gallery-filters .form-control {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<script>
+// ===== CSRF TOKEN FUNCTIONS =====
+function getCSRFToken() {
+    // Try multiple ways to get CSRF token
+    const tokenSelectors = [
+        'meta[name="csrf-token"]',
+        'input[name="csrf_token"]',
+        'input[name="csrf-token"]'
+    ];
+    
+    for (const selector of tokenSelectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+            const token = element.getAttribute('content') || element.value;
+            if (token && token !== 'None' && token !== '') {
+                console.log('CSRF token found');
+                return token;
+            }
+        }
+    }
+    
+    console.warn('CSRF token not found in HTML');
+    return null;
+}
+
+async function fetchCSRFToken() {
+    try {
+        console.log('Fetching CSRF token from API...');
+        const response = await fetch('/api/test-csrf');
+        const data = await response.json();
+        if (data.csrf_token) {
+            console.log('CSRF token received from API');
+            // Store it in a meta tag for future use
+            let metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (!metaTag) {
+                metaTag = document.createElement('meta');
+                metaTag.name = 'csrf-token';
+                document.head.appendChild(metaTag);
+            }
+            metaTag.setAttribute('content', data.csrf_token);
+            return data.csrf_token;
+        }
+    } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+    }
+    return null;
+}
+
+async function ensureCSRFToken() {
+    let token = getCSRFToken();
+    if (!token) {
+        token = await fetchCSRFToken();
+    }
+    return token;
+}
+
+// ===== NOTIFICATION SYSTEM =====
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.custom-notification').forEach(n => n.remove());
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `custom-notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : type === 'warning' ? '#FF9800' : '#2196F3'};
+        color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        font-family: inherit;
+        font-size: 14px;
+        max-width: 300px;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ===== VOTING FUNCTION =====
+async function voteForPhoto(photoId, buttonElement) {
+    console.log('=== VOTING FOR PHOTO:', photoId, '===');
+    
+    if (!buttonElement) {
+        console.error('No button element provided');
+        showNotification('Error: Cannot find vote button', 'error');
+        return;
+    }
+    
+    // Check if already voted
+    if (buttonElement.classList.contains('voted') || buttonElement.disabled) {
+        console.log('Already voted for this photo');
+        showNotification('You have already voted for this photo!', 'info');
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = await ensureCSRFToken();
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        showNotification('Security error. Please refresh the page.', 'error');
+        return;
+    }
+    
+    console.log('Sending vote request with CSRF token...');
+    
+    // Disable button immediately to prevent double clicks
+    buttonElement.disabled = true;
+    const originalText = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Voting...';
+    
+    try {
+        const response = await fetch(`/vote/${photoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (response.ok && data.success) {
+            // Update vote count
+            const voteCountElement = document.getElementById(`votes-${photoId}`);
+            if (voteCountElement) {
+                voteCountElement.textContent = data.votes;
+            }
+            
+            // Update button state
+            buttonElement.classList.add('voted');
+            buttonElement.innerHTML = '<i class="fas fa-heart"></i> Voted';
+            
+            // Update data attribute for sorting
+            const photoCard = buttonElement.closest('.photo-card');
+            if (photoCard) {
+                photoCard.setAttribute('data-votes', data.votes);
+            }
+            
+            // Update all vote buttons for this photo
+            document.querySelectorAll(`[data-photo-id="${photoId}"].btn-vote`).forEach(btn => {
+                btn.classList.add('voted');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-heart"></i> Voted';
+            });
+            
+            showNotification(data.message || 'Vote counted successfully!', 'success');
+            
+        } else {
+            const errorMessage = data.error || 'Failed to vote. Please try again.';
+            console.error('Vote error:', errorMessage);
+            showNotification(errorMessage, 'error');
+            
+            // Re-enable button if error
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalText;
+            
+            // If error is "already voted", update button state
+            if (data.error && data.error.includes('already voted')) {
+                buttonElement.classList.add('voted');
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<i class="fas fa-heart"></i> Voted';
+            }
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        showNotification('Network error. Please try again.', 'error');
+        
+        // Re-enable button on error
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = originalText;
+    }
+}
+
+// ===== COMMENT FUNCTION =====
+async function submitComment(photoId, textareaElement = null) {
+    console.log('=== SUBMITTING COMMENT FOR PHOTO:', photoId, '===');
+    
+    let commentText = '';
+    let textarea = textareaElement;
+    
+    if (!textarea) {
+        textarea = document.getElementById(`comment-text-${photoId}`);
+    }
+    
+    if (!textarea) {
+        console.error('Comment textarea not found');
+        showNotification('Error: Cannot find comment field', 'error');
+        return;
+    }
+    
+    commentText = textarea.value.trim();
+    
+    if (!commentText) {
+        showNotification('Please enter a comment.', 'error');
+        textarea.focus();
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = await ensureCSRFToken();
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        showNotification('Security error. Please refresh the page.', 'error');
+        return;
+    }
+    
+    console.log('Sending comment request...');
+    
+    try {
+        const formData = new URLSearchParams();
+        formData.append('content', commentText);
+        
+        const response = await fetch(`/comment/${photoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: formData,
+            credentials: 'same-origin'
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (response.ok && data.success) {
+            // Clear textarea
+            textarea.value = '';
+            
+            // Add new comment to UI
+            const commentsList = document.getElementById(`comments-${photoId}`);
+            if (commentsList) {
+                const newComment = document.createElement('div');
+                newComment.className = 'comment';
+                newComment.innerHTML = `
+                    <strong>${data.username || '{{ current_user.username if current_user.is_authenticated else "You" }}'}:</strong>
+                    ${data.content || commentText}
+                `;
+                
+                // Add to top of comments list
+                if (commentsList.firstChild) {
+                    commentsList.insertBefore(newComment, commentsList.firstChild);
+                } else {
+                    commentsList.appendChild(newComment);
+                }
+                
+                // Update comment count
+                const commentHeader = commentsList.previousElementSibling;
+                if (commentHeader && commentHeader.tagName === 'H4') {
+                    const countMatch = commentHeader.textContent.match(/\((\d+)\)/);
+                    if (countMatch) {
+                        const newCount = parseInt(countMatch[1]) + 1;
+                        commentHeader.textContent = commentHeader.textContent.replace(
+                            /\(\d+\)/,
+                            `(${newCount})`
+                        );
+                    } else {
+                        commentHeader.textContent = `Comments (1)`;
+                    }
+                }
+            }
+            
+            showNotification(data.message || 'Comment added successfully!', 'success');
+            
+        } else {
+            const errorMessage = data.error || 'Failed to add comment.';
+            console.error('Comment error:', errorMessage);
+            showNotification(errorMessage, 'error');
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        showNotification('Network error. Please try again.', 'error');
+    }
+}
+
+// ===== OTHER FUNCTIONS =====
+function viewPhotoDetails(photoId) {
+    console.log('Viewing photo details:', photoId);
+    window.location.href = `/photo/${photoId}`;
+}
+
+// ===== SEARCH AND FILTER FUNCTIONS =====
+document.getElementById('searchInput').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const photoCards = document.querySelectorAll('.photo-card');
+    
+    photoCards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const description = card.querySelector('.photo-description').textContent.toLowerCase();
+        const author = card.querySelector('.author').textContent.toLowerCase();
+        
+        if (title.includes(searchTerm) || description.includes(searchTerm) || author.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('sortSelect').addEventListener('change', function() {
+    const sortBy = this.value;
+    const container = document.getElementById('photoGrid');
+    const photoCards = Array.from(container.querySelectorAll('.photo-card'));
+    
+    photoCards.sort((a, b) => {
+        if (sortBy === 'votes') {
+            const votesA = parseInt(a.getAttribute('data-votes'));
+            const votesB = parseInt(b.getAttribute('data-votes'));
+            return votesB - votesA;
+        } else if (sortBy === 'recent') {
+            const dateA = new Date(a.getAttribute('data-date'));
+            const dateB = new Date(b.getAttribute('data-date'));
+            return dateB - dateA;
+        } else if (sortBy === 'oldest') {
+            const dateA = new Date(a.getAttribute('data-date'));
+            const dateB = new Date(b.getAttribute('data-date'));
+            return dateA - dateB;
+        }
+        return 0;
+    });
+    
+    // Re-append sorted cards
+    photoCards.forEach(card => container.appendChild(card));
+});
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== GALLERY PAGE INITIALIZED ===');
+    
+    // Initialize vote buttons
+    document.querySelectorAll('.btn-vote:not(.voted)').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const photoId = this.getAttribute('data-photo-id');
+            console.log('Vote button clicked for photo:', photoId);
+            voteForPhoto(photoId, this);
+        });
+    });
+    
+    // Fix for double comment submission
+    // We'll handle comment submission ONLY through the onclick attribute
+    // Remove any duplicate event listeners that might have been added
+    document.querySelectorAll('.btn-small').forEach(button => {
+        const onclickAttr = button.getAttribute('onclick');
+        if (onclickAttr && onclickAttr.includes('submitComment')) {
+            // Keep the onclick attribute, but ensure it only fires once
+            button.setAttribute('data-clicked', 'false');
+            
+            // Store original onclick
+            const originalOnclick = onclickAttr;
+            
+            // Replace with our controlled version
+            button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Prevent double clicks
+                if (this.getAttribute('data-clicked') === 'true') {
+                    console.log('Button already clicked, ignoring');
+                    return false;
+                }
+                
+                this.setAttribute('data-clicked', 'true');
+                
+                // Extract photo ID
+                const match = originalOnclick.match(/submitComment\('(\d+)'\)/);
+                if (match) {
+                    const photoId = match[1];
+                    const textarea = document.getElementById(`comment-text-${photoId}`);
+                    if (textarea) {
+                        console.log('Submitting comment for photo:', photoId);
+                        submitComment(photoId, textarea);
+                    }
+                }
+                
+                // Re-enable button after 2 seconds
+                setTimeout(() => {
+                    this.setAttribute('data-clicked', 'false');
+                }, 2000);
+                
+                return false;
+            };
+        }
+    });
+    
+    // Initialize Enter key for comment submission (Ctrl+Enter)
+    document.querySelectorAll('textarea[id^="comment-text-"]').forEach(textarea => {
+        textarea.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                const photoId = this.id.replace('comment-text-', '');
+                submitComment(photoId, this);
+            }
+        });
+    });
+    
+    // Test CSRF token on load
+    ensureCSRFToken().then(token => {
+        console.log('CSRF token on load:', token ? 'Available' : 'Missing');
+    });
+    
+    // Auto-remove flash messages
+    const flashMessages = document.querySelectorAll('.flash');
+    flashMessages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = 'opacity 0.5s';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 500);
+        }, 5000);
+    });
+    
+    console.log('Vote buttons:', document.querySelectorAll('.btn-vote').length);
+    console.log('Comment areas:', document.querySelectorAll('textarea[id^="comment-text-"]').length);
+});
+
+// Add CSS for animations if not already added
+if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+</script>
+{% endblock %}

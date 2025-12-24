@@ -1,0 +1,477 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Dashboard - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back, {{ current_user.username }}. Manage the competition here.</p>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ users|length }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ pending_photos|length }}</h3>
+                <p>Pending Photos</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ approved_photos|length }}</h3>
+                <p>Approved Photos</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ approved_photos|selectattr('votes_count')|sum(attribute='votes_count') }}</h3>
+                <p>Total Votes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Tabs -->
+    <div class="admin-tabs">
+        <button class="tab-btn active" onclick="openTab('pending')">Pending Review</button>
+        <button class="tab-btn" onclick="openTab('approved')">Approved</button>
+        <button class="tab-btn" onclick="openTab('rejected')">Rejected</button>
+        <button class="tab-btn" onclick="openTab('users')">Users</button>
+    </div>
+
+    <!-- Pending Photos Tab -->
+    <div id="pending" class="tab-content active">
+        <h2>Photos Pending Review ({{ pending_photos|length }})</h2>
+        
+        {% if pending_photos %}
+        <div class="photos-list">
+            {% for photo in pending_photos %}
+            <div class="admin-photo-card">
+                <div class="photo-preview">
+                    <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" 
+                         alt="{{ photo.title }}">
+                </div>
+                <div class="photo-details">
+                    <h3>{{ photo.title }}</h3>
+                    <p>{{ photo.description }}</p>
+                    <div class="photo-meta">
+                        <p><strong>Submitted by:</strong> {{ photo.author.username }} ({{ photo.author.email }})</p>
+                        <p><strong>Date:</strong> {{ photo.upload_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('approve_photo', photo_id=photo.id) }}" 
+                           class="btn btn-success" 
+                           onclick="return confirm('Approve this photo?')">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="{{ url_for('reject_photo', photo_id=photo.id) }}" 
+                           class="btn btn-danger"
+                           onclick="return confirm('Reject this photo?')">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                        <button class="btn btn-secondary" onclick="viewDetails('{{ photo.id }}')">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-check-circle fa-3x"></i>
+            <h3>No pending photos</h3>
+            <p>All submissions have been reviewed.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Approved Photos Tab -->
+    <div id="approved" class="tab-content">
+        <h2>Approved Photos ({{ approved_photos|length }})</h2>
+        
+        {% if approved_photos %}
+        <div class="photos-grid">
+            {% for photo in approved_photos %}
+            <div class="photo-card">
+                <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" 
+                     alt="{{ photo.title }}">
+                <div class="photo-card-content">
+                    <h4>{{ photo.title }}</h4>
+                    <p><strong>Votes:</strong> {{ photo.votes_count }}</p>
+                    <p><strong>Comments:</strong> {{ photo.comments|length }}</p>
+                    <p><strong>By:</strong> {{ photo.author.username }}</p>
+                    <button class="btn btn-small btn-warning" onclick="revertToPending('{{ photo.id }}')">
+                        Revert to Pending
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-images fa-3x"></i>
+            <h3>No approved photos yet</h3>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users" class="tab-content">
+        <h2>Registered Users ({{ users|length }})</h2>
+        
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th>Photos</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="role-badge role-{{ user.role }}">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ user.photos|length }}</td>
+                        <td>
+                            <button class="btn btn-small" onclick="viewUser('{{ user.id }}')">View</button>
+                            {% if user.id != current_user.id %}
+                            <button class="btn btn-small btn-danger" 
+                                    onclick="confirmDeleteUser('{{ user.id }}', '{{ user.username }}')">
+                                Delete
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .admin-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .admin-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .admin-header h1 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: #6D9674;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5em;
+    }
+
+    .stat-content h3 {
+        font-size: 2em;
+        color: #1F3B2C;
+        margin-bottom: 5px;
+    }
+
+    .stat-content p {
+        color: #666;
+    }
+
+    .admin-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .tab-btn {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        border-radius: 5px 5px 0 0;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        color: #666;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        background: #6D9674;
+        color: white;
+    }
+
+    .tab-btn:hover:not(.active) {
+        background: #f0f0f0;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .tab-content h2 {
+        color: #1F3B2C;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .admin-photo-card {
+        display: flex;
+        gap: 20px;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .photo-preview {
+        flex: 0 0 300px;
+    }
+
+    .photo-preview img {
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .photo-details {
+        flex: 1;
+    }
+
+    .photo-details h3 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+    }
+
+    .photo-meta {
+        margin: 15px 0;
+        color: #666;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-success {
+        background-color: #4CAF50;
+    }
+
+    .btn-danger {
+        background-color: #F44336;
+    }
+
+    .btn-warning {
+        background-color: #FF9800;
+    }
+
+    .photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #888;
+    }
+
+    .empty-state i {
+        margin-bottom: 20px;
+        color: #ddd;
+    }
+
+    .users-table-container {
+        overflow-x: auto;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .users-table th {
+        background: #6D9674;
+        color: white;
+        padding: 15px;
+        text-align: left;
+    }
+
+    .users-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .users-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: bold;
+    }
+
+    .role-admin {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .role-participant {
+        background-color: #2196F3;
+        color: white;
+    }
+
+    .role-voter {
+        background-color: #FF9800;
+        color: white;
+    }
+
+    .btn-small {
+        padding: 5px 10px;
+        font-size: 0.85em;
+    }
+
+    @media (max-width: 768px) {
+        .admin-photo-card {
+            flex-direction: column;
+        }
+
+        .photo-preview {
+            flex: none;
+        }
+
+        .admin-tabs {
+            flex-wrap: wrap;
+        }
+
+        .users-table {
+            font-size: 0.9em;
+        }
+    }
+</style>
+
+<script>
+function openTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active class from all buttons
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab and activate button
+    document.getElementById(tabName).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+function viewDetails(photoId) {
+    // Implement photo detail view
+    alert('View details for photo ID: ' + photoId);
+}
+
+function revertToPending(photoId) {
+    if (confirm('Revert this photo to pending status?')) {
+        // Implement revert functionality
+        alert('Revert functionality will be implemented');
+    }
+}
+
+function viewUser(userId) {
+    // Implement user detail view
+    alert('View user ID: ' + userId);
+}
+
+function confirmDeleteUser(userId, username) {
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+        // Implement delete functionality
+        alert('Delete user: ' + username);
+    }
+}
+</script>
+{% endblock %}

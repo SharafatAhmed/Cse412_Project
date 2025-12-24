@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Photo - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card card">
+        <h2>Edit Photo: {{ photo.title }}</h2>
+        <p class="subtitle">Make changes to your photo submission</p>
+        
+        <form method="POST" action="/update-photo/{{ photo.id }}" id="editPhotoForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Photo Preview -->
+            <div class="form-group">
+                <label>Current Photo</label>
+                <div class="photo-preview">
+                    <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" 
+                         alt="{{ photo.title }}"
+                         style="max-width: 300px; border-radius: 5px;">
+                    <p class="text-muted">Note: The image cannot be changed after submission.</p>
+                </div>
+            </div>
+            
+            <!-- Photo Title -->
+            <div class="form-group">
+                <label for="title">Photo Title *</label>
+                <input type="text" id="title" name="title" class="form-control" 
+                       value="{{ photo.title }}" required maxlength="200">
+            </div>
+            
+            <!-- Photo Description -->
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="4"
+                          maxlength="500">{{ photo.description or '' }}</textarea>
+                <small class="form-text">Tell us about your photo (optional, max 500 characters)</small>
+            </div>
+            
+            <!-- Status Info -->
+            <div class="alert alert-info">
+                <strong>Status:</strong> {{ photo.status|title }}<br>
+                <small>Only pending photos can be edited. Once approved, you cannot make changes.</small>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('profile') }}" class="btn btn-secondary btn-block">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .upload-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .upload-card {
+        padding: 30px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .upload-card h2 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-size: 2em;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+    }
+
+    .photo-preview {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    .photo-preview img {
+        max-width: 100%;
+        height: auto;
+        border: 2px solid #6D9674;
+        border-radius: 5px;
+    }
+
+    .text-muted {
+        color: #888;
+        margin-top: 10px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #17a2b8;
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .btn-block {
+        margin-bottom: 10px;
+        padding: 12px;
+        font-size: 1.1em;
+    }
+
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 1em;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .form-control:focus {
+        border-color: #6D9674;
+        box-shadow: 0 0 0 0.2rem rgba(109, 150, 116, 0.25);
+    }
+
+    label {
+        font-weight: 600;
+        color: #1F3B2C;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+</style>
+
+<script>
+document.getElementById('editPhotoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const formData = new FormData(this);
+    
+    // Disable submit button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '/profile';
+        } else {
+            alert(data.error || 'Failed to update photo');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving changes');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    });
+});
+</script>
+{% endblock %}

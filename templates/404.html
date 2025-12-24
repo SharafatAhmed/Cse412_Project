@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}Page Not Found - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <h1>404</h1>
+        <h2>Page Not Found</h2>
+        <p>The page you're looking for doesn't exist or has been moved.</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Return to Home</a>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 20px;
+    }
+    
+    .error-content {
+        text-align: center;
+        max-width: 500px;
+    }
+    
+    .error-content h1 {
+        font-size: 6em;
+        color: #6D9674;
+        margin-bottom: 0;
+    }
+    
+    .error-content h2 {
+        color: #1F3B2C;
+        margin-bottom: 20px;
+    }
+    
+    .error-content p {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+    }
+</style>
+{% endblock %}

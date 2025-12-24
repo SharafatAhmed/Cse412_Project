@@ -1,0 +1,520 @@
+{% extends "layout.html" %}
+
+{% block title %}About Us - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="about-container">
+    <!-- Hero Section -->
+    <div class="about-hero">
+        <div class="hero-content">
+            <h1>About Snap Showdown</h1>
+            <p class="tagline">Capturing Moments, Creating Legends</p>
+            <p class="description">
+                Welcome to the ultimate photography competition platform where creativity meets opportunity. 
+                We're dedicated to providing photographers of all levels a stage to showcase their talent.
+            </p>
+        </div>
+        <div class="hero-image">
+            <img src="{{ url_for('static', filename='images/about-hero.jpg') }}" alt="Photography Competition">
+        </div>
+    </div>
+
+    <!-- Mission & Vision -->
+    <div class="mission-vision">
+        <div class="mission-card">
+            <div class="icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <h2>Our Mission</h2>
+            <p>
+                To democratize photography competitions by providing an accessible, fair, and engaging platform 
+                for photographers worldwide to showcase their work, receive recognition, and grow their skills.
+            </p>
+        </div>
+        
+        <div class="vision-card">
+            <div class="icon">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h2>Our Vision</h2>
+            <p>
+                To become the leading global platform for photography competitions, fostering a vibrant community 
+                where every photographer can find their audience and every photograph can tell its story.
+            </p>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="how-it-works">
+        <h2>How Snap Showdown Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Sign Up & Choose Your Role</h3>
+                    <p>Register as a Participant to submit photos, as a Voter to participate in judging, or explore both roles.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Submit Your Photos</h3>
+                    <p>Participants can upload their best photographs following competition guidelines and themes.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Admin Review</h3>
+                    <p>Our team reviews submissions to ensure they meet quality standards and competition rules.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Community Voting</h3>
+                    <p>Approved photos enter the public gallery where the community votes for their favorites.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>Results & Recognition</h3>
+                    <p>Winners are announced based on votes, with prizes, recognition, and features on our platform.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Section -->
+    <div class="team-section">
+        <h2>Meet Our Team</h2>
+        <div class="team-grid">
+            <div class="team-member">
+                <div class="member-photo">
+                    <img src="{{ url_for('static', filename='images/team1.jpg') }}" alt="Sharafat Ahmed">
+                </div>
+                <div class="member-info">
+                    <h3>Sharafat Ahmed</h3>
+                    <p class="role">Project Manager & Lead Developer</p>
+                    <p class="bio">Oversees project development and ensures smooth operation of the platform.</p>
+                </div>
+            </div>
+            
+            <div class="team-member">
+                <div class="member-photo">
+                    <img src="{{ url_for('static', filename='images/team2.jpg') }}" alt="Nafiu Islam">
+                </div>
+                <div class="member-info">
+                    <h3>Nafiu Islam</h3>
+                    <p class="role">Backend Developer</p>
+                    <p class="bio">Manages server-side logic, database design, and API development.</p>
+                </div>
+            </div>
+            
+            <div class="team-member">
+                <div class="member-photo">
+                    <img src="{{ url_for('static', filename='images/team3.jpg') }}" alt="Ahmed Labib">
+                </div>
+                <div class="member-info">
+                    <h3>Ahmed Labib</h3>
+                    <p class="role">Frontend Developer</p>
+                    <p class="bio">Designs and implements user interfaces for optimal user experience.</p>
+                </div>
+            </div>
+            
+            <div class="team-member">
+                <div class="member-photo">
+                    <img src="{{ url_for('static', filename='images/team4.jpg') }}" alt="Ahanaf Tanvir">
+                </div>
+                <div class="member-info">
+                    <h3>Ahanaf Tanvir</h3>
+                    <p class="role">Documentation & Testing</p>
+                    <p class="bio">Ensures comprehensive documentation and rigorous testing of all features.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Values -->
+    <div class="values-section">
+        <h2>Our Core Values</h2>
+        <div class="values-grid">
+            <div class="value-card">
+                <i class="fas fa-users"></i>
+                <h3>Community</h3>
+                <p>Building a supportive network where photographers can connect and grow together.</p>
+            </div>
+            
+            <div class="value-card">
+                <i class="fas fa-balance-scale"></i>
+                <h3>Fairness</h3>
+                <p>Ensuring transparent judging processes and equal opportunities for all participants.</p>
+            </div>
+            
+            <div class="value-card">
+                <i class="fas fa-lightbulb"></i>
+                <h3>Creativity</h3>
+                <p>Celebrating innovation and artistic expression in every photograph.</p>
+            </div>
+            
+            <div class="value-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Integrity</h3>
+                <p>Maintaining trust through honest practices and secure platform operations.</p>
+            </div>
+            
+            <div class="value-card">
+                <i class="fas fa-rocket"></i>
+                <h3>Innovation</h3>
+                <p>Continuously improving our platform with cutting-edge features and technology.</p>
+            </div>
+            
+            <div class="value-card">
+                <i class="fas fa-heart"></i>
+                <h3>Passion</h3>
+                <p>Driven by our love for photography and commitment to our community.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact CTA -->
+    <div class="contact-cta">
+        <h2>Have Questions?</h2>
+        <p>We'd love to hear from you. Get in touch with our team for any inquiries.</p>
+        <a href="{{ url_for('contact') }}" class="btn btn-primary">Contact Us</a>
+    </div>
+</div>
+
+<style>
+    .about-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Hero Section */
+    .about-hero {
+        display: flex;
+        align-items: center;
+        gap: 50px;
+        margin-bottom: 60px;
+        padding: 40px;
+        background: linear-gradient(135deg, #6D9674, #1F3B2C);
+        color: white;
+        border-radius: 15px;
+    }
+
+    .hero-content {
+        flex: 1;
+    }
+
+    .hero-content h1 {
+        font-size: 3em;
+        margin-bottom: 15px;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .tagline {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        opacity: 0.9;
+    }
+
+    .description {
+        font-size: 1.1em;
+        line-height: 1.6;
+        max-width: 600px;
+    }
+
+    .hero-image {
+        flex: 1;
+    }
+
+    .hero-image img {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Mission & Vision */
+    .mission-vision {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .mission-card, .vision-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s;
+    }
+
+    .mission-card:hover, .vision-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .mission-card .icon, .vision-card .icon {
+        width: 80px;
+        height: 80px;
+        background: #6D9674;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: white;
+        font-size: 2em;
+    }
+
+    .mission-card h2, .vision-card h2 {
+        color: #1F3B2C;
+        margin-bottom: 15px;
+    }
+
+    .mission-card p, .vision-card p {
+        color: #666;
+        line-height: 1.6;
+    }
+
+    /* How It Works */
+    .how-it-works {
+        margin-bottom: 60px;
+        padding: 40px;
+        background: #f9f9f9;
+        border-radius: 15px;
+    }
+
+    .how-it-works h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 40px;
+        font-size: 2em;
+    }
+
+    .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .step-number {
+        width: 60px;
+        height: 60px;
+        background: #6D9674;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .step-content h3 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+    }
+
+    .step-content p {
+        color: #666;
+        line-height: 1.5;
+    }
+
+    /* Team Section */
+    .team-section {
+        margin-bottom: 60px;
+    }
+
+    .team-section h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 40px;
+        font-size: 2em;
+    }
+
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+    }
+
+    .team-member {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+
+    .team-member:hover {
+        transform: translateY(-10px);
+    }
+
+    .member-photo {
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .member-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+
+    .team-member:hover .member-photo img {
+        transform: scale(1.1);
+    }
+
+    .member-info {
+        padding: 20px;
+    }
+
+    .member-info h3 {
+        color: #1F3B2C;
+        margin-bottom: 5px;
+    }
+
+    .role {
+        color: #6D9674;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .bio {
+        color: #666;
+        line-height: 1.5;
+        font-size: 0.95em;
+    }
+
+    /* Values Section */
+    .values-section {
+        margin-bottom: 60px;
+    }
+
+    .values-section h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 40px;
+        font-size: 2em;
+    }
+
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .value-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+    .value-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+
+    .value-card i {
+        font-size: 3em;
+        color: #6D9674;
+        margin-bottom: 20px;
+    }
+
+    .value-card h3 {
+        color: #1F3B2C;
+        margin-bottom: 15px;
+    }
+
+    .value-card p {
+        color: #666;
+        line-height: 1.5;
+    }
+
+    /* Contact CTA */
+    .contact-cta {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #6D9674, #1F3B2C);
+        color: white;
+        border-radius: 15px;
+    }
+
+    .contact-cta h2 {
+        font-size: 2.5em;
+        margin-bottom: 15px;
+    }
+
+    .contact-cta p {
+        font-size: 1.2em;
+        margin-bottom: 30px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        opacity: 0.9;
+    }
+
+    .contact-cta .btn {
+        padding: 15px 40px;
+        font-size: 1.2em;
+        background: white;
+        color: #1F3B2C;
+        border: 2px solid white;
+    }
+
+    .contact-cta .btn:hover {
+        background: transparent;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .about-hero {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .hero-content h1 {
+            font-size: 2em;
+        }
+
+        .step {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .mission-vision, .team-grid, .values-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .step-number {
+            margin-bottom: 15px;
+        }
+    }
+</style>
+{% endblock %}

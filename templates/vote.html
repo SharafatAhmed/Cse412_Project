@@ -1,0 +1,153 @@
+<script>
+// Initialize vote buttons with event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Vote page loaded');
+    
+    // Add event listeners to all vote buttons
+    document.querySelectorAll('.btn-vote:not(.voted)').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const photoId = this.getAttribute('data-photo-id');
+            console.log('Vote button clicked for photo:', photoId);
+            voteForPhoto(photoId, this);
+        });
+    });
+});
+
+function voteForPhoto(photoId, buttonElement) {
+    console.log('Voting for photo:', photoId);
+    
+    if (!buttonElement) {
+        console.error('No button element provided');
+        return;
+    }
+    
+    // Check if already voted
+    if (buttonElement.classList.contains('voted') || buttonElement.disabled) {
+        console.log('Already voted for this photo');
+        showNotification('You have already voted for this photo!', 'error');
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        showNotification('Security error. Please refresh the page.', 'error');
+        return;
+    }
+    
+    console.log('Sending vote request with CSRF token:', csrfToken.substring(0, 20) + '...');
+    
+    // Make the vote request
+    fetch(`/vote/${photoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({}),
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status, response.statusText);
+        return response.json().then(data => {
+            return { ok: response.ok, data: data };
+        });
+    })
+    .then(result => {
+        console.log('Vote result:', result);
+        if (result.ok && result.data.success) {
+            // Update vote count
+            const voteCountElement = document.getElementById(`vote-count-${photoId}`);
+            if (voteCountElement) {
+                voteCountElement.textContent = result.data.votes;
+            }
+            
+            // Update button state
+            buttonElement.disabled = true;
+            buttonElement.classList.add('voted');
+            buttonElement.innerHTML = '<i class="fas fa-heart"></i> Voted';
+            
+            // Update data attribute for card
+            const photoCard = buttonElement.closest('.vote-card');
+            if (photoCard) {
+                photoCard.setAttribute('data-votes', result.data.votes);
+            }
+            
+            // Show success message
+            showNotification('Vote counted successfully!', 'success');
+            
+            // Update user's vote count in header
+            updateUserVoteCount();
+            
+        } else if (result.data.error) {
+            showNotification(result.data.error, 'error');
+            if (result.data.error.includes('already voted')) {
+                buttonElement.disabled = true;
+                buttonElement.classList.add('voted');
+                buttonElement.innerHTML = '<i class="fas fa-heart"></i> Voted';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error voting:', error);
+        showNotification('Network error. Please try again.', 'error');
+    });
+}
+
+function viewPhoto(photoId) {
+    window.location.href = `/photo/${photoId}`;
+}
+
+function updateUserVoteCount() {
+    const voteStats = document.querySelector('.vote-stats span:last-child');
+    if (voteStats) {
+        const currentCount = parseInt(voteStats.textContent.match(/\d+/)[0]) || 0;
+        voteStats.textContent = `Your Votes: ${currentCount + 1}`;
+    }
+}
+
+// Reuse the CSRF token function from gallery with improvements
+function getCSRFToken() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        const token = metaTag.getAttribute('content');
+        if (token && token !== 'None') return token;
+    }
+    
+    const csrfInput = document.querySelector('input[name="csrf_token"]');
+    if (csrfInput) {
+        const token = csrfInput.value;
+        if (token && token !== 'None') return token;
+    }
+    
+    // Also check for csrf-token (with dash)
+    const csrfDashInput = document.querySelector('input[name="csrf-token"]');
+    if (csrfDashInput) {
+        const token = csrfDashInput.value;
+        if (token && token !== 'None') return token;
+    }
+    
+    console.warn('CSRF token not found in any expected location');
+    return null;
+}
+
+// Improved notification function
+function showNotification(message, type = 'info') {
+    // Check if notification function exists from gallery
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+        return;
+    }
+    
+    // Fallback to alert for now
+    alert(`${type.toUpperCase()}: ${message}`);
+}
+
+// Test CSRF on page load
+window.addEventListener('load', function() {
+    console.log('CSRF Token available:', getCSRFToken() ? 'Yes' : 'No');
+});
+</script>

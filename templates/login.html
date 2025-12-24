@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+
+{% block title %}Login - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-wrapper">
+        <div class="login-image">
+            <img src="{{ url_for('static', filename='images/login-bg.jpg') }}" alt="Photography Background">
+        </div>
+        
+        <div class="login-form">
+            <h2>Welcome to Snap Showdown</h2>
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Enter your email") }}
+                    {% for error in form.email.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control", placeholder="Enter your password") }}
+                    {% for error in form.password.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+                
+                <p class="form-footer">
+                    Don't have an account? 
+                    <a href="{{ url_for('register') }}">Register here</a>
+                </p>
+            </form>
+            
+            <div class="demo-accounts">
+                <h3>Demo Accounts:</h3>
+                <div class="demo-card">
+                    <p><strong>Admin:</strong> admin@snapshowdown.com / admin123</p>
+                    <p><strong>Participant:</strong> participant@example.com / password123</p>
+                    <p><strong>Voter:</strong> voter@example.com / password123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .login-wrapper {
+        display: flex;
+        max-width: 1000px;
+        width: 100%;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .login-image {
+        flex: 1;
+        overflow: hidden;
+    }
+    
+    .login-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .login-form {
+        flex: 1;
+        padding: 40px;
+        background: #F1E8E2;
+    }
+    
+    .login-form h2 {
+        color: #1F3B2C;
+        text-align: center;
+        margin-bottom: 30px;
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #1F3B2C;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1em;
+        margin-bottom: 5px;
+    }
+    
+    .error {
+        color: #e74c3c;
+        font-size: 0.9em;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .form-footer {
+        text-align: center;
+        margin-top: 20px;
+        color: #555;
+    }
+    
+    .form-footer a {
+        color: #6D9674;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    .form-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    .demo-accounts {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+    }
+    
+    .demo-accounts h3 {
+        color: #1F3B2C;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+    
+    .demo-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #6D9674;
+    }
+    
+    .demo-card p {
+        margin: 8px 0;
+        font-size: 0.9em;
+        color: #555;
+    }
+    
+    @media (max-width: 768px) {
+        .login-wrapper {
+            flex-direction: column;
+        }
+        
+        .login-image {
+            height: 200px;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block title %}Server Error - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <h1>500</h1>
+        <h2>Internal Server Error</h2>
+        <p>Something went wrong on our end. Please try again later.</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Return to Home</a>
+        <a href="{{ url_for('contact') }}" class="btn btn-secondary">Contact Support</a>
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 20px;
+    }
+    
+    .error-content {
+        text-align: center;
+        max-width: 500px;
+    }
+    
+    .error-content h1 {
+        font-size: 6em;
+        color: #f39c12;
+        margin-bottom: 0;
+    }
+    
+    .error-content h2 {
+        color: #1F3B2C;
+        margin-bottom: 20px;
+    }
+    
+    .error-content p {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+    }
+    
+    .error-content .btn {
+        margin: 5px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,902 @@
+{% extends "layout.html" %}
+
+{% block title %}Previous Winners - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="winners-container">
+    <!-- Hero Section -->
+    <div class="winners-hero">
+        <div class="hero-content">
+            <h1><i class="fas fa-crown"></i> Our Champions</h1>
+            <p class="subtitle">Celebrating the exceptional talent that has graced our competitions</p>
+            <p class="description">
+                Meet the photographers whose creativity and skill have earned them top honors 
+                in past Snap Showdown competitions. Their inspiring work continues to motivate 
+                our community.
+            </p>
+        </div>
+        <div class="hero-image">
+            <img src="{{ url_for('static', filename='images/winners-hero.jpg') }}" alt="Winners Celebration">
+        </div>
+    </div>
+
+    <!-- Winners Gallery -->
+    <div class="winners-gallery">
+        <h2>Hall of Fame</h2>
+        <p class="section-description">These talented photographers have demonstrated excellence and creativity in our competitions.</p>
+        
+        <div class="winners-grid">
+            {% if winners and winners|length > 0 %}
+                {% for winner in winners %}
+                <div class="winner-card">
+                    <div class="winner-header">
+                        <div class="winner-rank">
+                            <span class="rank-number">#{{ loop.index }}</span>
+                            {% if loop.index == 1 %}
+                                <i class="fas fa-crown rank-icon gold"></i>
+                            {% elif loop.index == 2 %}
+                                <i class="fas fa-award rank-icon silver"></i>
+                            {% elif loop.index == 3 %}
+                                <i class="fas fa-award rank-icon bronze"></i>
+                            {% endif %}
+                        </div>
+                        <div class="winner-image">
+                            <img src="{{ url_for('uploaded_file', filename=winner.filename) if winner.filename else url_for('static', filename='images/placeholder.jpg') }}" 
+                                 alt="{{ winner.title }}">
+                        </div>
+                    </div>
+                    
+                    <div class="winner-content">
+                        <h3>{{ winner.title }}</h3>
+                        <p class="winner-description">{{ winner.description[:100] }}{% if winner.description|length > 100 %}...{% endif %}</p>
+                        
+                        <div class="winner-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-heart"></i>
+                                <span>{{ winner.votes_count }} votes</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-comment"></i>
+                                <span>{{ winner.comments|length if winner.comments else 0 }} comments</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>{{ winner.upload_date.strftime('%B %Y') if winner.upload_date else 'Unknown' }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="photographer-info">
+                            <div class="photographer-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="photographer-details">
+                                <h4>{{ winner.author.username if winner.author else 'Unknown Photographer' }}</h4>
+                                <p class="photographer-email">{{ winner.author.email if winner.author else '' }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="winner-quote">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"This achievement has been a milestone in my photography journey, inspiring me to push creative boundaries."</p>
+                        </div>
+                        
+                        <div class="winner-actions">
+                            <a href="{{ url_for('gallery') }}" class="btn btn-small">
+                                <i class="fas fa-eye"></i> View Photo
+                            </a>
+                            <button class="btn btn-small btn-secondary" onclick="shareWinner('{{ winner.id }}')">
+                                <i class="fas fa-share"></i> Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-winners">
+                    <div class="no-winners-content">
+                        <i class="fas fa-trophy fa-4x"></i>
+                        <h3>No Winners Yet</h3>
+                        <p>Be the first to win our competition! Submit your best photos and compete for the top spot.</p>
+                        {% if current_user.is_authenticated and current_user.is_participant() %}
+                            <a href="{{ url_for('upload_photo') }}" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Submit Your Photo
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Register to Participate
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Featured Winner Stories -->
+    <div class="winner-stories">
+        <h2>Winner Stories & Testimonials</h2>
+        
+        <div class="stories-grid">
+            <div class="story-card">
+                <div class="story-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Sharafat Ahmed</h4>
+                        <p>Winner - Spring 2024 Competition</p>
+                    </div>
+                </div>
+                <div class="story-content">
+                    <p>"Winning the Snap Showdown competition was a turning point in my photography career. 
+                    The recognition gave me the confidence to pursue photography professionally. 
+                    The platform's community feedback was invaluable for my growth."</p>
+                </div>
+                <div class="story-image">
+                    <img src="{{ url_for('static', filename='images/story1.jpg') }}" alt="Sharafat's Story">
+                </div>
+            </div>
+            
+            <div class="story-card">
+                <div class="story-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Ahmed Labib</h4>
+                        <p>Winner - Summer 2024 Competition</p>
+                    </div>
+                </div>
+                <div class="story-content">
+                    <p>"This competition helped me connect with photographers worldwide. 
+                    The exposure from winning opened doors to exhibitions and collaborations. 
+                    Snap Showdown truly celebrates artistic vision and technical excellence."</p>
+                </div>
+                <div class="story-image">
+                    <img src="{{ url_for('static', filename='images/story2.jpg') }}" alt="Labib's Story">
+                </div>
+            </div>
+            
+            <div class="story-card">
+                <div class="story-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Nafiu Islam</h4>
+                        <p>Winner - Autumn 2024 Competition</p>
+                    </div>
+                </div>
+                <div class="story-content">
+                    <p>"As an amateur photographer, I never expected to win. This experience 
+                    motivated me to explore new techniques and perspectives. The constructive 
+                    feedback from the community helped me refine my skills tremendously."</p>
+                </div>
+                <div class="story-image">
+                    <img src="{{ url_for('static', filename='images/story3.jpg') }}" alt="Nafiu's Story">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition History -->
+    <div class="competition-history">
+        <h2>Competition Timeline</h2>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">Spring 2024</div>
+                <div class="timeline-content">
+                    <h4>Inaugural Competition</h4>
+                    <p>Our first official competition with 150+ submissions from 20+ countries.</p>
+                    <div class="timeline-stats">
+                        <span><i class="fas fa-users"></i> 250 Participants</span>
+                        <span><i class="fas fa-camera"></i> 150+ Photos</span>
+                        <span><i class="fas fa-heart"></i> 5,000+ Votes</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Summer 2024</div>
+                <div class="timeline-content">
+                    <h4>Landscape Photography Focus</h4>
+                    <p>Themed competition focusing on natural landscapes and outdoor photography.</p>
+                    <div class="timeline-stats">
+                        <span><i class="fas fa-users"></i> 350 Participants</span>
+                        <span><i class="fas fa-camera"></i> 200+ Photos</span>
+                        <span><i class="fas fa-heart"></i> 8,000+ Votes</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Autumn 2024</div>
+                <div class="timeline-content">
+                    <h4>Urban Photography Challenge</h4>
+                    <p>Focus on cityscapes, architecture, and urban life photography.</p>
+                    <div class="timeline-stats">
+                        <span><i class="fas fa-users"></i> 400+ Participants</span>
+                        <span><i class="fas fa-camera"></i> 250+ Photos</span>
+                        <span><i class="fas fa-heart"></i> 10,000+ Votes</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Winter 2024</div>
+                <div class="timeline-content">
+                    <h4>Portrait Photography Competition</h4>
+                    <p>Current competition focusing on portrait and people photography.</p>
+                    <div class="timeline-stats">
+                        <span><i class="fas fa-users"></i> 300+ Participants</span>
+                        <span><i class="fas fa-camera"></i> 180+ Photos</span>
+                        <span><i class="fas fa-heart"></i> Voting in Progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="winners-cta">
+        <h2>Join Our Hall of Fame</h2>
+        <p>Submit your best work and become our next champion. Showcase your talent to our global community.</p>
+        
+        <div class="cta-buttons">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_participant() %}
+                    <a href="{{ url_for('upload_photo') }}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Submit Your Entry
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('profile') }}" class="btn btn-primary">
+                        <i class="fas fa-user-edit"></i> Update Profile to Participate
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Register Now
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            {% endif %}
+            <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">
+                <i class="fas fa-trophy"></i> View Current Leaderboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .winners-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Hero Section */
+    .winners-hero {
+        display: flex;
+        align-items: center;
+        gap: 50px;
+        margin-bottom: 60px;
+        padding: 40px;
+        background: linear-gradient(135deg, #6D9674, #1F3B2C);
+        color: white;
+        border-radius: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .winners-hero {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    .hero-content {
+        flex: 1;
+    }
+
+    .hero-content h1 {
+        font-size: 3em;
+        margin-bottom: 15px;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .subtitle {
+        font-size: 1.3em;
+        margin-bottom: 20px;
+        opacity: 0.9;
+    }
+
+    .description {
+        font-size: 1.1em;
+        line-height: 1.6;
+        max-width: 600px;
+    }
+
+    .hero-image {
+        flex: 1;
+    }
+
+    .hero-image img {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Winners Gallery */
+    .winners-gallery {
+        margin-bottom: 60px;
+    }
+
+    .winners-gallery h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 15px;
+        font-size: 2.5em;
+    }
+
+    .section-description {
+        text-align: center;
+        color: #666;
+        margin-bottom: 40px;
+        font-size: 1.1em;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .winners-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .winners-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .winner-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .winner-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+
+    .winner-header {
+        position: relative;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+
+    .winner-rank {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 2;
+    }
+
+    .rank-number {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #1F3B2C;
+        background: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+
+    .rank-icon {
+        font-size: 1.8em;
+    }
+
+    .rank-icon.gold {
+        color: #FFD700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .rank-icon.silver {
+        color: #C0C0C0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .rank-icon.bronze {
+        color: #CD7F32;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .winner-image {
+        height: 250px;
+        overflow: hidden;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .winner-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+
+    .winner-card:hover .winner-image img {
+        transform: scale(1.05);
+    }
+
+    .winner-content {
+        padding: 25px;
+    }
+
+    .winner-content h3 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+        font-size: 1.4em;
+    }
+
+    .winner-description {
+        color: #666;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        font-size: 0.95em;
+    }
+
+    .winner-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .stat-item i {
+        font-size: 1.2em;
+        color: #6D9674;
+        margin-bottom: 5px;
+    }
+
+    .stat-item span {
+        font-size: 0.85em;
+        color: #666;
+    }
+
+    .photographer-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f1f8f5;
+        border-radius: 8px;
+    }
+
+    .photographer-avatar {
+        width: 50px;
+        height: 50px;
+        background: #6D9674;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2em;
+    }
+
+    .photographer-details h4 {
+        color: #1F3B2C;
+        margin-bottom: 5px;
+        font-size: 1.1em;
+    }
+
+    .photographer-email {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .winner-quote {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #fff8e1;
+        border-left: 4px solid #ffcc00;
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .winner-quote i.fa-quote-left {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #ffcc00;
+        font-size: 1.2em;
+    }
+
+    .winner-quote p {
+        color: #666;
+        font-style: italic;
+        padding-left: 25px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .winner-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .winner-actions .btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    /* No Winners State */
+    .no-winners {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px dashed #ddd;
+    }
+
+    .no-winners-content i {
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+
+    .no-winners-content h3 {
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .no-winners-content p {
+        color: #888;
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Winner Stories */
+    .winner-stories {
+        margin-bottom: 60px;
+    }
+
+    .winner-stories h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 40px;
+        font-size: 2.5em;
+    }
+
+    .stories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .story-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+
+    .story-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .story-author {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .author-avatar {
+        width: 50px;
+        height: 50px;
+        background: #6D9674;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2em;
+    }
+
+    .author-info h4 {
+        color: #1F3B2C;
+        margin-bottom: 5px;
+    }
+
+    .author-info p {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .story-content {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+
+    .story-image {
+        height: 150px;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .story-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Competition History */
+    .competition-history {
+        margin-bottom: 60px;
+    }
+
+    .competition-history h2 {
+        text-align: center;
+        color: #1F3B2C;
+        margin-bottom: 40px;
+        font-size: 2.5em;
+    }
+
+    .timeline {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: 100%;
+        background: #6D9674;
+    }
+
+    @media (max-width: 768px) {
+        .timeline::before {
+            left: 20px;
+        }
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .timeline-item {
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 40px;
+        }
+    }
+
+    .timeline-date {
+        flex: 1;
+        padding: 10px 20px;
+        background: #6D9674;
+        color: white;
+        border-radius: 20px;
+        font-weight: bold;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        .timeline-date {
+            align-self: flex-start;
+            margin-bottom: 15px;
+        }
+    }
+
+    .timeline-content {
+        flex: 2;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-left: 30px;
+        position: relative;
+    }
+
+    @media (max-width: 768px) {
+        .timeline-content {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
+
+    .timeline-content::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 10px;
+        border-style: solid;
+        border-color: transparent white transparent transparent;
+    }
+
+    @media (max-width: 768px) {
+        .timeline-content::before {
+            display: none;
+        }
+    }
+
+    .timeline-content h4 {
+        color: #1F3B2C;
+        margin-bottom: 10px;
+    }
+
+    .timeline-content p {
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+
+    .timeline-stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .timeline-stats span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.85em;
+        color: #666;
+    }
+
+    .timeline-stats i {
+        color: #6D9674;
+    }
+
+    /* CTA Section */
+    .winners-cta {
+        text-align: center;
+        padding: 60px 40px;
+        background: linear-gradient(135deg, #6D9674, #1F3B2C);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 40px;
+    }
+
+    .winners-cta h2 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+
+    .winners-cta p {
+        font-size: 1.2em;
+        max-width: 700px;
+        margin: 0 auto 30px;
+        opacity: 0.9;
+        line-height: 1.6;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-buttons .btn {
+        padding: 15px 30px;
+        font-size: 1.1em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cta-buttons .btn-primary {
+        background: white;
+        color: #1F3B2C;
+        border: 2px solid white;
+    }
+
+    .cta-buttons .btn-primary:hover {
+        background: transparent;
+        color: white;
+    }
+
+    .cta-buttons .btn-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid white;
+    }
+
+    .cta-buttons .btn-secondary:hover {
+        background: white;
+        color: #1F3B2C;
+    }
+</style>
+
+<script>
+function shareWinner(winnerId) {
+    const url = window.location.href;
+    const title = 'Check out this winning photo on Snap Showdown!';
+    
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            url: url
+        }).then(() => {
+            console.log('Thanks for sharing!');
+        }).catch(console.error);
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard! Share it with your friends.');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+}
+
+// Animate timeline items on scroll
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateX(0)';
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+    
+    timelineItems.forEach(item => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-20px)';
+        item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(item);
+    });
+});
+</script>
+{% endblock %}

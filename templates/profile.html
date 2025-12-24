@@ -1,0 +1,795 @@
+{% extends "layout.html" %}
+
+{% block title %}My Profile - Snap Showdown{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-main">
+        <!-- Profile Header -->
+        <div class="profile-header card">
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + current_user.profile_picture) }}" 
+                         alt="{{ current_user.username }}" 
+                         style="background-color: #f0f0f0; min-height: 150px;">
+                    <button onclick="document.getElementById('profile-picture-input').click()" class="btn btn-small">
+                        <i class="fas fa-camera"></i> Change
+                    </button>
+                    <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+                </div>
+                <div class="profile-details">
+                    <h1>{{ current_user.username }}</h1>
+                    <p class="user-email">{{ current_user.email }}</p>
+                    <p class="user-role">Role: <span class="role-badge">{{ current_user.role|title }}</span></p>
+                    <p class="user-joined">Member since: {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                    
+                    {% if current_user.bio %}
+                        <p class="user-bio">{{ current_user.bio }}</p>
+                    {% else %}
+                        <p class="user-bio">No bio yet. <a href="#" onclick="showEditBio(); return false;">Add a bio</a></p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ photos_count }}</div>
+                    <div class="stat-label">Photos Submitted</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ approved_count }}</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ pending_count }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions card">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                {% if current_user.is_participant() %}
+                    <a href="{{ url_for('upload_photo') }}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Submit New Photo
+                    </a>
+                {% endif %}
+                
+                
+                
+                <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-trophy"></i> View Leaderboard
+                </a>
+                
+                <a href="#" onclick="editProfile(); return false;" class="btn btn-secondary">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        {% if notifications %}
+        <div class="notifications-section card">
+            <h3>Recent Notifications</h3>
+            <div class="notifications-list">
+                {% for notification in notifications %}
+                <div class="notification-item" data-id="{{ notification.id }}">
+                    <div class="notification-content">
+                        <p>{{ notification.message }}</p>
+                        <small>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <button class="btn-mark-read" onclick="markNotificationRead('{{ notification.id }}'); return false;">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- My Photos -->
+        <div class="my-photos-section">
+            <h2>My Submitted Photos</h2>
+            
+            {% if photos %}
+            <div class="photos-grid">
+                {% for photo in photos %}
+                <div class="photo-card">
+                    <div class="photo-status status-{{ photo.status }}">
+                        {{ photo.status|title }}
+                    </div>
+                    <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" 
+                         alt="{{ photo.title }}"
+                         style="background-color: #f0f0f0; min-height: 200px;">
+                    <div class="photo-card-content">
+                        <h4>{{ photo.title }}</h4>
+                        <p>{{ photo.description[:80] if photo.description else 'No description' }}...</p>
+                        <div class="photo-stats">
+                            <span><i class="fas fa-heart"></i> {{ photo.votes_count }}</span>
+                            <span><i class="fas fa-comment"></i> {{ photo.comments|length }}</span>
+                        </div>
+                        <div class="photo-actions">
+                            <a href="#" class="btn btn-small" onclick="viewPhoto('{{ photo.id }}'); return false;">View</a>
+                            {% if photo.status == 'pending' %}
+                                <button class="btn btn-small btn-warning" onclick="editPhoto('{{ photo.id }}'); return false;">Edit</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-photos">
+                <i class="fas fa-camera fa-3x"></i>
+                <h3>No photos submitted yet</h3>
+                <p>Start your journey by submitting your first photo!</p>
+                {% if current_user.is_participant() %}
+                    <a href="{{ url_for('upload_photo') }}" class="btn btn-primary">Submit Your First Photo</a>
+                {% else %}
+                    <p class="text-muted">You need to be a participant to submit photos.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding: 30px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .profile-info {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+    }
+
+    .profile-avatar {
+        position: relative;
+    }
+
+    .profile-avatar img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 3px solid #6D9674;
+        object-fit: cover;
+    }
+
+    .profile-avatar .btn {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        background: #6D9674;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .profile-details h1 {
+        color: #1F3B2C;
+        margin-bottom: 5px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 2em;
+    }
+
+    .user-email {
+        color: #666;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        background-color: #6D9674;
+        color: white;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+    }
+
+    .user-joined {
+        color: #888;
+        font-size: 0.9em;
+        margin-bottom: 15px;
+    }
+
+    .user-bio {
+        max-width: 500px;
+        line-height: 1.6;
+        color: #555;
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 3px solid #6D9674;
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: 30px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #1F3B2C;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+
+    .quick-actions {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .quick-actions h3 {
+        margin-bottom: 20px;
+        color: #1F3B2C;
+        font-size: 1.5em;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #1F3B2C;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: #6D9674;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+        background: #e0e0e0;
+        transform: translateY(-2px);
+    }
+
+    .notifications-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .notifications-section h3 {
+        margin-bottom: 15px;
+        color: #1F3B2C;
+        font-size: 1.5em;
+    }
+
+    .notifications-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .notification-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.3s;
+    }
+
+    .notification-item:hover {
+        background-color: #f9f9f9;
+    }
+
+    .notification-content p {
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .notification-content small {
+        color: #888;
+    }
+
+    .btn-mark-read {
+        background: none;
+        border: none;
+        color: #6D9674;
+        cursor: pointer;
+        font-size: 1.2em;
+        padding: 5px;
+        transition: color 0.3s;
+    }
+
+    .btn-mark-read:hover {
+        color: #1F3B2C;
+    }
+
+    .my-photos-section {
+        margin-top: 40px;
+    }
+
+    .my-photos-section h2 {
+        color: #1F3B2C;
+        margin-bottom: 20px;
+        font-size: 1.8em;
+    }
+
+    .photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .photo-card {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+        background: white;
+    }
+
+    .photo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .photo-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .photo-card-content {
+        padding: 15px;
+    }
+
+    .photo-card-content h4 {
+        margin-bottom: 10px;
+        color: #1F3B2C;
+        font-size: 1.2em;
+    }
+
+    .photo-card-content p {
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+
+    .photo-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 3px 10px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        font-weight: bold;
+        z-index: 1;
+    }
+
+    .status-approved {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .status-pending {
+        background-color: #FF9800;
+        color: white;
+    }
+
+    .status-rejected {
+        background-color: #F44336;
+        color: white;
+    }
+
+    .photo-stats {
+        display: flex;
+        gap: 15px;
+        margin: 10px 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .photo-stats span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .photo-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .photo-actions .btn-small {
+        padding: 5px 15px;
+        font-size: 0.9em;
+        border-radius: 3px;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .btn-small {
+        padding: 5px 15px;
+        font-size: 0.9em;
+        border-radius: 3px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-warning {
+        background: #FF9800;
+        color: white;
+        border: none;
+    }
+
+    .btn-warning:hover {
+        background: #e68900;
+    }
+
+    .no-photos {
+        text-align: center;
+        padding: 50px 20px;
+        background: #f9f9f9;
+        border-radius: 10px;
+        border: 2px dashed #ddd;
+    }
+
+    .no-photos i {
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+
+    .no-photos h3 {
+        color: #666;
+        margin-bottom: 10px;
+        font-size: 1.5em;
+    }
+
+    .no-photos p {
+        color: #888;
+        margin-bottom: 20px;
+        font-size: 1.1em;
+    }
+
+    .text-muted {
+        color: #888;
+        font-style: italic;
+    }
+
+    .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 10px;
+        }
+        
+        .profile-header {
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .profile-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .profile-avatar img {
+            width: 120px;
+            height: 120px;
+        }
+
+        .profile-stats {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .photos-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+// Function to edit profile
+function editProfile() {
+    // Create a modal for editing profile
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        ">
+            <h3 style="margin-top: 0; color: #1F3B2C;">Edit Profile</h3>
+            <form id="editProfileForm">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
+                    <input type="text" id="editUsername" value="{{ current_user.username }}" 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Bio</label>
+                    <textarea id="editBio" rows="4" 
+                              style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">{{ current_user.bio or '' }}</textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="saveProfile()" 
+                            style="flex: 1; padding: 12px; background: #6D9674; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Save Changes
+                    </button>
+                    <button type="button" onclick="this.closest('.modal-overlay').remove()" 
+                            style="flex: 1; padding: 12px; background: #ccc; color: #333; border: none; border-radius: 5px; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Save profile changes
+function saveProfile() {
+    const username = document.getElementById('editUsername').value.trim();
+    const bio = document.getElementById('editBio').value.trim();
+    
+    if (!username) {
+        alert('Username is required');
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = getCSRFToken();
+    
+    // Send update request
+    fetch('/update-profile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `username=${encodeURIComponent(username)}&bio=${encodeURIComponent(bio)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            document.querySelector('.modal-overlay').remove();
+            // Reload page to show changes
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to update profile');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating profile:', error);
+        alert('An error occurred while updating profile');
+    });
+}
+
+// Helper function to get CSRF token
+function getCSRFToken() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        const token = metaTag.getAttribute('content');
+        if (token && token !== 'None') return token;
+    }
+    
+    const csrfInput = document.querySelector('input[name="csrf_token"]');
+    if (csrfInput) {
+        const token = csrfInput.value;
+        if (token && token !== 'None') return token;
+    }
+    
+    return null;
+}
+
+function showEditBio() {
+    const newBio = prompt('Enter your bio:');
+    if (newBio !== null) {
+        // Get CSRF token
+        const csrfToken = getCSRFToken();
+        
+        fetch('/update-profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: 'bio=' + encodeURIComponent(newBio)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to update bio');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating bio');
+        });
+    }
+}
+
+function markNotificationRead(notificationId) {
+    // Get CSRF token
+    const csrfToken = getCSRFToken();
+    
+    fetch(`/api/mark-notification-read/${notificationId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationItem) {
+                notificationItem.style.opacity = '0.5';
+                setTimeout(() => notificationItem.remove(), 500);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error marking notification as read:', error);
+    });
+}
+
+function viewPhoto(photoId) {
+    window.location.href = `/photo/${photoId}`;
+}
+
+function editPhoto(photoId) {
+    window.location.href = `/edit-photo/${photoId}`;
+}
+
+// Handle profile picture upload
+const profilePictureInput = document.getElementById('profile-picture-input');
+if (profilePictureInput) {
+    profilePictureInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            // Check file size (max 5MB)
+            const file = this.files[0];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            if (file.size > maxSize) {
+                alert('File size exceeds 5MB limit. Please choose a smaller image.');
+                this.value = ''; // Reset input
+                return;
+            }
+            
+            // Check file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Only JPG, PNG, and GIF files are allowed.');
+                this.value = ''; // Reset input
+                return;
+            }
+            
+            // Get CSRF token
+            const csrfToken = getCSRFToken();
+            
+            const formData = new FormData();
+            formData.append('profile_picture', this.files[0]);
+            
+            fetch('/upload-profile-picture', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to upload profile picture');
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading profile picture:', error);
+                alert('An error occurred while uploading the picture');
+            });
+        }
+    });
+}
+</script>
+{% endblock %}
